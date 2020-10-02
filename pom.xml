@@ -60,10 +60,6 @@
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-servlet-starter</artifactId>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.apache.activemq</groupId>-->
-<!--			<artifactId>activemq-pool</artifactId>-->
-<!--		</dependency>-->
 		<dependency>
 			<groupId>org.messaginghub</groupId>
 			<artifactId>pooled-jms</artifactId>

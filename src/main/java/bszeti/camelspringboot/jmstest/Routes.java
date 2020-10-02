@@ -18,6 +18,9 @@ public class Routes extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
+
+        log.error("Test",new Exception("log"));
+
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive")
             .log(LoggingLevel.DEBUG, log, "Message received: ${exchangeId} - ${body}")
@@ -26,14 +29,10 @@ public class Routes extends RouteBuilder {
                 .when(simple("${body} contains 'error' "))
                 .throwException(new Exception("error"))
             .end()
-//            .process(e-> {
-//
-//            })
+
             .process(e->counter.incrementAndGet())
             .delay(constant("{{receive.delay}}"))
-//            .throwException(new Exception("test"))
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
-        //TODO: Is there a default max error retry in Artmeis or AMQP? While is it not retrying forever?????
         ;
 
         from("timer:printCounter?period=1000")

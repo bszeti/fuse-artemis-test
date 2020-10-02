@@ -36,30 +36,27 @@ public class Application {
 		return new JmsConnectionFactory(username,password,url);
 	}
 
-//	@Bean
-//	public ConnectionFactory cachingConnectionFactory() {
-//		CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
-//		cachingConnectionFactory.setTargetConnectionFactory(amqConnectionFactory(null,null,null));
-//		return cachingConnectionFactory;
-//	}
 
 	@Bean
-	public ConnectionFactory jmsPoolConnectionFactory() {
-		JmsPoolConnectionFactory jmsPoolConnectionFactory = new JmsPoolConnectionFactory();
-		jmsPoolConnectionFactory.setConnectionFactory(amqConnectionFactory(null,null,null));
-		jmsPoolConnectionFactory.setMaxConnections(1);
-		return jmsPoolConnectionFactory;
+	public ConnectionFactory getPoolConnectionFactory(@Value("${useCachingConnectionFactory}") Boolean useCachingConnectionFactory) {
+
+		if (useCachingConnectionFactory) {
+			// Spring CachingConnectionFactory
+			CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
+			cachingConnectionFactory.setTargetConnectionFactory(amqConnectionFactory(null,null,null));
+			return cachingConnectionFactory;
+		} else {
+			// MessagingHub JmsPoolConnectionFactory
+			JmsPoolConnectionFactory jmsPoolConnectionFactory = new JmsPoolConnectionFactory();
+			jmsPoolConnectionFactory.setConnectionFactory(amqConnectionFactory(null, null, null));
+			jmsPoolConnectionFactory.setMaxConnections(1);
+			return jmsPoolConnectionFactory;
+		}
 	}
 
 	@Bean(name="amqp")
 	public Component  amqpComponent() {
-		JmsComponent component = JmsComponent.jmsComponent(jmsPoolConnectionFactory());
-//		JmsComponent component = JmsComponent.jmsComponent(cachingConnectionFactory());
-//		JmsComponent component = JmsComponent.jmsComponent(amqConnectionFactory(null,null,null));
-//		component.setTransacted(true);
-//		component.setCacheLevel(CACHE_CONSUMER);
-//		component.setAsyncConsumer(false);
-//		component.setAcknowledgementModeName("SESSION_TRANSACTED");
+		JmsComponent component = JmsComponent.jmsComponent(getPoolConnectionFactory(null));
 		return component;
 	}
 
