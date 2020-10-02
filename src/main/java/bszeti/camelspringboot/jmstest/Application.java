@@ -38,14 +38,17 @@ public class Application {
 
 
 	@Bean
-	public ConnectionFactory getPoolConnectionFactory(@Value("${useCachingConnectionFactory}") Boolean useCachingConnectionFactory) {
+	public ConnectionFactory getPoolConnectionFactory(@Value("${useCachingConnectionFactory}") Boolean useCachingConnectionFactory, @Value("${sessionCacheSize}") Integer sessionCacheSize) {
 
 		if (useCachingConnectionFactory) {
+
 			// Spring CachingConnectionFactory
 			CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
 			cachingConnectionFactory.setTargetConnectionFactory(amqConnectionFactory(null,null,null));
+			cachingConnectionFactory.setSessionCacheSize(sessionCacheSize);
 			return cachingConnectionFactory;
 		} else {
+
 			// MessagingHub JmsPoolConnectionFactory
 			JmsPoolConnectionFactory jmsPoolConnectionFactory = new JmsPoolConnectionFactory();
 			jmsPoolConnectionFactory.setConnectionFactory(amqConnectionFactory(null, null, null));
@@ -56,7 +59,7 @@ public class Application {
 
 	@Bean(name="amqp")
 	public Component  amqpComponent() {
-		JmsComponent component = JmsComponent.jmsComponent(getPoolConnectionFactory(null));
+		JmsComponent component = JmsComponent.jmsComponent(getPoolConnectionFactory(null,null));
 		return component;
 	}
 

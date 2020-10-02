@@ -19,8 +19,6 @@ public class Routes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-        log.error("Test",new Exception("log"));
-
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive")
             .log(LoggingLevel.DEBUG, log, "Message received: ${exchangeId} - ${body}")
