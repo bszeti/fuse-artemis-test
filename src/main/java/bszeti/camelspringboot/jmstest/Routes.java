@@ -1,12 +1,12 @@
 package bszeti.camelspringboot.jmstest;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,6 +33,7 @@ public class Routes extends RouteBuilder {
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
         ;
 
+
         from("timer:printCounter?period=1000")
             .setBody(b->{
                 int current = counter.get();
@@ -40,6 +41,7 @@ public class Routes extends RouteBuilder {
                 previous=current;
                 return "current: " + current + " - " +diff +"/s";
             })
+
             .log(LoggingLevel.INFO, log, "${body}")
         ;
 
