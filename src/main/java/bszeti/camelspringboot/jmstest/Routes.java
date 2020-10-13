@@ -38,14 +38,6 @@ public class Routes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-//        getContext().
-//
-//        ExecutorService senderExecutor = new ThreadPoolBuilder()
-//            .maxQueueSize(sendThreads)
-//            .poolSize(sendThreads)
-//            .maxPoolSize(sendThreads)
-//            .rejectedPolicy(ThreadPoolRejectedPolicy.CallerRuns) //Causes +1 sender thread.
-//        .build();
 
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive").autoStartup("{{receive.enabled}}")
@@ -61,33 +53,6 @@ public class Routes extends RouteBuilder {
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
         ;
 
-
-//        RouteDefinition sender =
-//            from("timer:sender?period={{send.delay}}&repeatCount={{send.count}}")
-//            .routeId("amqp.send").autoStartup("{{send.enabled}}");
-//            if (sendThreads>1) {
-//                sender.threads().poolSize(sendThreads-1).maxPoolSize(sendThreads-1).maxQueueSize(sendThreads-1).rejectedPolicy(ThreadPoolRejectedPolicy.CallerRuns);
-//            }
-//            sender
-//                .log(LoggingLevel.DEBUG, log, "Send msg: ${exchangeId}")
-//                .setBody(simple(sendMessage))
-//                .to("amqp:{{send.endpoint}}")
-//                .process(e-> sendCounter.incrementAndGet())
-//                .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId} - ${body}")
-//        ;
-
-//        from("timer:sender?period=0")
-//            .routeId("amqp.send").autoStartup("{{send.enabled}}")
-//            .log(LoggingLevel.DEBUG, log, "Sending {{send.count}}")
-//            .loop(constant("{{send.count}}")).copy()
-//                .threads().poolSize(sendThreads).maxPoolSize(sendThreads).maxQueueSize(sendThreads).rejectedPolicy(ThreadPoolRejectedPolicy.CallerRuns)
-//                .log(LoggingLevel.DEBUG, log, "Send msg: ${exchangeId}-${header.CamelLoopIndex}")
-//                .setBody(simple(sendMessage))
-//                .to("amqp:{{send.endpoint}}")
-//                .process(e-> sendCounter.incrementAndGet())
-//                .delay(constant("{{send.delay}}"))
-//                .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId} - ${body}")
-//            ;
 
             from("timer:sender?period=1&repeatCount={{send.threads}}")
                 .routeId("amqp.send").autoStartup("{{send.enabled}}")
