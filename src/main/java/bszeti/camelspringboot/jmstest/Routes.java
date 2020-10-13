@@ -1,14 +1,10 @@
 package bszeti.camelspringboot.jmstest;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.ThreadPoolRejectedPolicy;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.builder.ThreadPoolBuilder;
-import org.apache.camel.model.RouteDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
