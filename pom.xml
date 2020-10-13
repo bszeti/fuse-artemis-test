@@ -8,6 +8,8 @@
 
 	<properties>
 		<fuse.version>7.7.0.fuse-sb2-770010-redhat-00001</fuse.version>
+<!--		<fuse.version>7.6.0.fuse-sb2-760028-redhat-00001</fuse.version>-->
+
 <!--		<fuse.version>7.7.0.fuse-770012-redhat-00003</fuse.version>-->
 		<!-- maven plugin versions -->
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -50,6 +52,7 @@
 		<dependency>
 			<groupId>io.hawt</groupId>
 			<artifactId>hawtio-springboot</artifactId>
+<!--			<version>2.0.0.fuse-sb2-760022-redhat-00001</version>-->
 		</dependency>
 
 		<dependency>
@@ -64,6 +67,24 @@
 			<groupId>org.messaginghub</groupId>
 			<artifactId>pooled-jms</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>com.ibm.mq</groupId>
+			<artifactId>mq-jms-spring-boot-starter</artifactId>
+			<version>2.1.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<!-- <version>${jackson.version}</version> -->
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<!-- <version>${jackson.version}</version> -->
+		</dependency>
+
 	</dependencies>
 	<build>
 		<defaultGoal>spring-boot:run</defaultGoal>
