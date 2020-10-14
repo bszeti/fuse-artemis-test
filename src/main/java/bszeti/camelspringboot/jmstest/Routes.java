@@ -56,9 +56,16 @@ public class Routes extends RouteBuilder {
                 .throwException(new Exception("error"))
             .end()
 
-            .process(e-> receiveCounter.incrementAndGet())
+            .choice()
+                .when(constant("{{receive.forward.enabled}}"))
+                .to("amqp:{{receive.forward.endpoint}}")
+            .end()
+
+            
             .delay(constant("{{receive.delay}}"))
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
+            .process(e-> receiveCounter.incrementAndGet())
+
         ;
 
 
@@ -91,12 +98,16 @@ public class Routes extends RouteBuilder {
 
             from("timer:sender?period=1&repeatCount={{send.threads}}")
                 .routeId("amqp.send").autoStartup("{{send.enabled}}")
+ 
                     .threads().poolSize(sendThreads).maxPoolSize(sendThreads).maxQueueSize(sendThreads).rejectedPolicy(ThreadPoolRejectedPolicy.CallerRuns)
+                        
                         .log(LoggingLevel.INFO, log, "Sending {{send.count}}")
                         .loop(constant("{{send.count}}"))
                             .log(LoggingLevel.DEBUG, log, "Send msg: ${exchangeId}-${header.CamelLoopIndex}")
+                            
                             .setBody(simple(sendMessage))
-                            .to("amqp:{{send.endpoint}}")
+                            .setHeader("{{send.headeruuid}}").exchange(e->java.util.UUID.randomUUID().toString())
+                            .to("amqp:{{send.endpoint}}?transacted=false")
                             .process(e-> sendCounter.incrementAndGet())
                             .delay(constant("{{send.delay}}"))
                             .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId}-${header.CamelLoopIndex} - ${body}")
