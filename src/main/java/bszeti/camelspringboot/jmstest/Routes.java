@@ -34,6 +34,10 @@ public class Routes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
+        onException(Exception.class)
+            .maximumRedeliveries(0)
+            .log(LoggingLevel.ERROR,"onException: ${exception}")
+        ;
 
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive").autoStartup("{{receive.enabled}}")
@@ -46,14 +50,14 @@ public class Routes extends RouteBuilder {
 
             .choice()
                 .when(constant("{{receive.forward.enabled}}"))
+                .delay(constant("{{receive.forward.delay}}"))
+                .log(LoggingLevel.DEBUG, log, "Message forward: ${exchangeId}")
                 .to("amqp:{{receive.forward.endpoint}}")
             .end()
-
             
             .delay(constant("{{receive.delay}}"))
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
             .process(e-> receiveCounter.incrementAndGet())
-
         ;
 
 

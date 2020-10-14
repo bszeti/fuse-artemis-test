@@ -21,11 +21,15 @@ public class Application {
 		SpringApplication.run(Application.class, args);
 	}
 
-//	@Bean(name="amqp")
-//	public AMQPComponent getAMQPComponent(@Value("${amqp.url}") String url, @Value("${amqp.username}")  String username, @Value("${amqp.password}") String password) {
-//		AMQPComponent amqpComponent = AMQPComponent.amqpComponent(url, username, password);
-//		return amqpComponent;
-//	}
+	@Value("${jmscomponent.transacted}")
+	Boolean jmsComponentTransacted;
+	
+	@Bean(name="amqp")
+	public AMQPComponent getAMQPComponent(@Autowired ConnectionFactory pooledConnectionFactory) {
+		AMQPComponent amqpComponent = new AMQPComponent(pooledConnectionFactory);
+		amqpComponent.setTransacted(jmsComponentTransacted);
+		return amqpComponent;
+	}
 
 	//This is a non-pooled ConnectionFactory
 //	@Bean
@@ -56,11 +60,11 @@ public class Application {
 		}
 	}
 
-	@Bean(name="amqp")
-	public Component  amqpComponent(@Autowired ConnectionFactory pooledConnectionFactory) {
-		JmsComponent component = JmsComponent.jmsComponent(pooledConnectionFactory);
-		return component;
-	}
+	// @Bean(name="amqp")
+	// public Component  amqpComponent(@Autowired ConnectionFactory pooledConnectionFactory) {
+	// 	JmsComponent component = JmsComponent.jmsComponent(pooledConnectionFactory);
+	// 	return component;
+	// }
 
 
 }
