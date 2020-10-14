@@ -27,6 +27,7 @@ public class Application {
 //		return amqpComponent;
 //	}
 
+	//This is a non-pooled ConnectionFactory
 //	@Bean
 //	public ConnectionFactory amqConnectionFactory(@Value("${amqp.url}") String url, @Value("${amqp.username}")  String username, @Value("${amqp.password}") String password){
 //		return new JmsConnectionFactory(username,password,url);
