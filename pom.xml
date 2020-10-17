@@ -56,10 +56,17 @@
 <!--			<version>2.0.0.fuse-sb2-760022-redhat-00001</version>-->
 		</dependency>
 
+
+		<dependency>
+			<groupId>org.apache.qpid</groupId>
+			<artifactId>qpid-jms-client</artifactId>
+			<version>0.53.0.redhat-00001</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-amqp</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-servlet-starter</artifactId>
