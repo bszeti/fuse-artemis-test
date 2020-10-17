@@ -40,8 +40,12 @@ public class Routes extends RouteBuilder {
             .log(LoggingLevel.ERROR,"Camel onException: ${exception}")
         ;
 
+        // Receive messages and optionally forward them to another queue
+        // If message body contains "error" an exception is thrown (before forwarding)
+        // The consumer can have transacted=true, then the rest of the route uses transaction policy receive.forward.propagation. This is to test different scenarios for the forwarding. Default is PROPAGATION_REQUIRED
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive").autoStartup("{{receive.enabled}}")
+            .transacted("jmsSendTransaction")
             .log(LoggingLevel.DEBUG, log, "Message received: ${exchangeId} - ${body}")
 
             .choice()
@@ -58,11 +62,14 @@ public class Routes extends RouteBuilder {
                 .to("amqp:{{receive.forward.endpoint}}")
                 .process(e-> receiveForwardedCounter.incrementAndGet())
             .end()
-            
+
             .delay(constant("{{receive.delay}}"))
             .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
         ;
 
+        // Send messages -  send.threads X send.count
+        // Message body is from property send.message. For examepl a simple experessions: #{'$'}{exchangeId}/#{'$'}{header.CamelLoopIndex}
+        // Add a UUID header. Use send.headeruuid=_AMQ_DUPL_ID for Artemis duplicate detection.
         from("timer:sender?period=1&repeatCount={{send.threads}}")
             .routeId("amqp.send").autoStartup("{{send.enabled}}")
 
@@ -83,6 +90,7 @@ public class Routes extends RouteBuilder {
             .log(LoggingLevel.INFO, log, "Done - {{send.count}}")
         ;
 
+        // Print counters in log
         from("timer:printCounter?period=1000")
             .setBody(b->{
                 if (receiveEnabled) {

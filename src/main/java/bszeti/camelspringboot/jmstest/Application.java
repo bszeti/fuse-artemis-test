@@ -5,6 +5,7 @@ import javax.jms.ConnectionFactory;
 import org.apache.camel.Component;
 import org.apache.camel.component.amqp.AMQPComponent;
 import org.apache.camel.component.jms.JmsComponent;
+import org.apache.camel.spring.spi.SpringTransactionPolicy;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jms.connection.CachingConnectionFactory;
 import org.messaginghub.pooled.jms.JmsPoolConnectionFactory;
+import org.springframework.jms.connection.JmsTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootApplication
 public class Application {
@@ -51,7 +55,6 @@ public class Application {
 			cachingConnectionFactory.setSessionCacheSize(sessionCacheSize);
 			return cachingConnectionFactory;
 		} else {
-
 			// MessagingHub JmsPoolConnectionFactory
 			JmsPoolConnectionFactory jmsPoolConnectionFactory = new JmsPoolConnectionFactory();
 			jmsPoolConnectionFactory.setConnectionFactory(new JmsConnectionFactory(username,password,url));
@@ -67,4 +70,15 @@ public class Application {
 	// }
 
 
+	@Bean
+	public JmsTransactionManager myTransactionManager(@Autowired ConnectionFactory pooledConnectionFactory){
+		return new JmsTransactionManager(pooledConnectionFactory);
+	}
+
+	@Bean
+	public SpringTransactionPolicy jmsSendTransaction(@Autowired JmsTransactionManager jmsTransactionManager, @Value("${receive.forward.propagation}") String transactionPropagation){
+		SpringTransactionPolicy transactionPolicy = new SpringTransactionPolicy(jmsTransactionManager);
+		transactionPolicy.setPropagationBehaviorName(transactionPropagation);
+		return transactionPolicy;
+	}
 }
