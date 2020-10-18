@@ -36,8 +36,8 @@ public class Routes extends RouteBuilder {
     public void configure() throws Exception {
 
         onException(Exception.class)
-            .maximumRedeliveries(0)
-            .log(LoggingLevel.ERROR,"Camel onException: ${exception}")
+            .maximumRedeliveries("{{exception.maximumredeliveries}}")
+            .log(LoggingLevel.ERROR,"***************************************\n********************** Camel onException: ${exception}\n***************************************")
         ;
 
         // Receive messages and optionally forward them to another queue
