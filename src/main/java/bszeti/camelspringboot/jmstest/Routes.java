@@ -1,7 +1,11 @@
 package bszeti.camelspringboot.jmstest;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.PostConstruct;
+
+import org.apache.camel.Headers;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.ThreadPoolRejectedPolicy;
 import org.apache.camel.builder.RouteBuilder;
@@ -32,6 +36,33 @@ public class Routes extends RouteBuilder {
     @Value("${send.message}")
     String sendMessage;
 
+    @Value("${send.message.length}")
+    Integer sendMessageLength;
+
+    @Value("${send.headers.count}")
+    Integer sendHeadersCount;
+
+    @Value("${send.headers.length}")
+    Integer sendHeadersLength;
+
+    @PostConstruct
+    private void postConstruct(){
+        if (sendMessageLength>0) {
+            sendMessage = String.format("%1$"+sendMessageLength+ "s", "").replace(" ","M");
+        }
+    }
+
+    public void addExtraHeaders(@Headers Map<Object,Object> headers){
+        if (sendHeadersCount>0){
+            for(int i=0; i<sendHeadersCount; i++) {
+                String key="extra"+i;
+                String value=String.format("%1$"+sendHeadersLength+ "s", "").replace(" ","H");
+                headers.put(key,value);
+            }
+        }
+
+    }
+
     @Override
     public void configure() throws Exception {
 
@@ -45,8 +76,8 @@ public class Routes extends RouteBuilder {
         // The consumer can have transacted=true, then the rest of the route uses transaction policy receive.forward.propagation. This is to test different scenarios for the forwarding. Default is PROPAGATION_REQUIRED
         from("amqp:{{receive.endpoint}}")
             .routeId("amqp.receive").autoStartup("{{receive.enabled}}")
-            .transacted("jmsSendTransaction")
-            .log(LoggingLevel.DEBUG, log, "Message received: ${exchangeId} - ${body}")
+//            .transacted("jmsSendTransaction")
+            .log(LoggingLevel.DEBUG, log, "Received:  ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER}")
 
             .choice()
                 .when(simple("${body} contains 'error' "))
@@ -58,13 +89,15 @@ public class Routes extends RouteBuilder {
             .choice()
                 .when(constant("{{receive.forward.enabled}}"))
                 .delay(constant("{{receive.forward.delay}}"))
-                .log(LoggingLevel.DEBUG, log, "Message forward: ${exchangeId} - ${header.counter}")
+                .setHeader("_AMQ_DUPL_ID",constant("0000000000000000"))
                 .to("amqp:{{receive.forward.endpoint}}")
+                .log(LoggingLevel.DEBUG, log, "Forwarded: ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER} - ${header.counter}")
                 .process(e-> receiveForwardedCounter.incrementAndGet())
+                .end()
             .end()
 
             .delay(constant("{{receive.delay}}"))
-            .log(LoggingLevel.DEBUG, log, "Message processed: ${exchangeId}")
+            .log(LoggingLevel.DEBUG, log, "Processed: ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER}")
         ;
 
         // Send messages -  send.threads X send.count
@@ -81,6 +114,8 @@ public class Routes extends RouteBuilder {
 
                         .setBody(simple(sendMessage))
                         .setHeader("{{send.headeruuid}}").exchange(e->java.util.UUID.randomUUID().toString())
+                        .bean(this,"addExtraHeaders")
+
                         .to("amqp:{{send.endpoint}}?transacted=false")
                         .process(e-> sendCounter.incrementAndGet())
                         .delay(constant("{{send.delay}}"))

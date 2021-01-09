@@ -41,7 +41,7 @@ public class Application {
 	@Bean
 	@Primary
 	public ConnectionFactory pooledConnectionFactory(@Value("${amqp.url}") String url, @Value("${amqp.username}")  String username, @Value("${amqp.password}") String password,
-													 @Value("${useCachingConnectionFactory}") Boolean useCachingConnectionFactory, @Value("${sessionCacheSize}") Integer sessionCacheSize) {
+													 @Value("${useCachingConnectionFactory}") Boolean useCachingConnectionFactory, @Value("${sessionCacheSize}") Integer sessionCacheSize, @Value("${jmspool.maxConnections}") Integer maxConnections) {
 
 		if (useCachingConnectionFactory) {
 
@@ -54,7 +54,7 @@ public class Application {
 			// MessagingHub JmsPoolConnectionFactory
 			JmsPoolConnectionFactory jmsPoolConnectionFactory = new JmsPoolConnectionFactory();
 			jmsPoolConnectionFactory.setConnectionFactory(new JmsConnectionFactory(username,password,url));
-			jmsPoolConnectionFactory.setMaxConnections(5);
+			jmsPoolConnectionFactory.setMaxConnections(maxConnections);
 			return jmsPoolConnectionFactory;
 		}
 
