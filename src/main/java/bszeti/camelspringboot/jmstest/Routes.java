@@ -1,5 +1,6 @@
 package bszeti.camelspringboot.jmstest;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,22 +46,25 @@ public class Routes extends RouteBuilder {
     @Value("${send.headers.length}")
     Integer sendHeadersLength;
 
+    Map<Object,Object> extraHeaders = new HashMap<>();
+
     @PostConstruct
     private void postConstruct(){
         if (sendMessageLength>0) {
             sendMessage = String.format("%1$"+sendMessageLength+ "s", "").replace(" ","M");
         }
-    }
 
-    public void addExtraHeaders(@Headers Map<Object,Object> headers){
         if (sendHeadersCount>0){
             for(int i=0; i<sendHeadersCount; i++) {
                 String key="extra"+i;
                 String value=String.format("%1$"+sendHeadersLength+ "s", "").replace(" ","H");
-                headers.put(key,value);
+                extraHeaders.put(key,value);
             }
         }
+    }
 
+    public void addExtraHeaders(@Headers Map<Object,Object> headers){
+       headers.putAll(extraHeaders);
     }
 
     @Override
@@ -116,7 +120,7 @@ public class Routes extends RouteBuilder {
                         .setHeader("{{send.headeruuid}}").exchange(e->java.util.UUID.randomUUID().toString())
                         .bean(this,"addExtraHeaders")
 
-                        .to("amqp:{{send.endpoint}}?transacted=false")
+                        .to("amqp:{{send.endpoint}}")
                         .process(e-> sendCounter.incrementAndGet())
                         .delay(constant("{{send.delay}}"))
                         .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId}-${header.CamelLoopIndex} - ${body}")

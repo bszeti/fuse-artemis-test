@@ -7,7 +7,8 @@
 	<version>1.0-SNAPSHOT</version>
 
 	<properties>
-		<fuse.version>7.7.0.fuse-sb2-770010-redhat-00001</fuse.version>
+		<fuse.version>7.8.0.fuse-sb2-780038-redhat-00001</fuse.version>
+<!--		<fuse.version>7.7.0.fuse-sb2-770010-redhat-00001</fuse.version>-->
 <!--		<fuse.version>7.6.0.fuse-sb2-760028-redhat-00001</fuse.version>-->
 
 <!--		<fuse.version>7.7.0.fuse-770012-redhat-00003</fuse.version>-->
@@ -27,7 +28,22 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+<!--			<dependency>-->
+<!--				<groupId>org.apache.qpid</groupId>-->
+<!--				<artifactId>qpid-jms-client</artifactId>-->
+<!--				<version>0.54.0.redhat-00001</version>-->
+<!--			</dependency>-->
+
+<!--			<dependency>-->
+<!--				<groupId>org.apache.qpid</groupId>-->
+<!--				<artifactId>proton-j</artifactId>-->
+<!--				<version>0.33.8.redhat-00001</version>-->
+<!--			</dependency>-->
+
 		</dependencies>
+
+
 	</dependencyManagement>
 
 	<dependencies>
@@ -56,11 +72,11 @@
 		</dependency>
 
 
-<!--		<dependency>-->
-<!--			<groupId>org.apache.qpid</groupId>-->
-<!--			<artifactId>qpid-jms-client</artifactId>-->
-<!--			<version>0.53.0.redhat-00001</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>artemis-cli</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-amqp</artifactId>
