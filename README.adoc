@@ -1,0 +1,23 @@
+= Fuse with Artemis broker test app
+
+This application can send, receive and forward messages to an Artemis message broker.
+
+== Send messages
+
+We can send messages to a queue by creating this properties file:
+```
+#application-send.properties
+send.enabled=true
+send.endpoint=queue:sendtest
+send.message.length=1
+send.headers.count=1
+send.headers.length=10000
+send.delay=0
+send.count=100000
+```
+
+This will send 100000 messages with only 1 char message body and one 10000 char long JMS property.
+
+Run application using the _send_ Spring profile. For example with Maven:
+
+`mvn clean spring-boot:run -Dspring-boot.run.profiles=send`
