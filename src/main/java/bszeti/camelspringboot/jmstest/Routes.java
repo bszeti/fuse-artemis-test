@@ -93,7 +93,7 @@ public class Routes extends RouteBuilder {
             .choice()
                 .when(constant("{{receive.forward.enabled}}"))
                 .delay(constant("{{receive.forward.delay}}"))
-                .setHeader("_AMQ_DUPL_ID",constant("0000000000000000"))
+//                .setHeader("_AMQ_DUPL_ID",constant("0000000000000000"))
                 .to("amqp:{{receive.forward.endpoint}}")
                 .log(LoggingLevel.DEBUG, log, "Forwarded: ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER} - ${header.counter}")
                 .process(e-> receiveForwardedCounter.incrementAndGet())

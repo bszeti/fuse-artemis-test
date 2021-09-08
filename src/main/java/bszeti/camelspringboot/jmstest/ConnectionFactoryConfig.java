@@ -5,6 +5,8 @@ import javax.jms.ConnectionFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.messaginghub.pooled.jms.JmsPoolConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +17,7 @@ import org.springframework.util.StringUtils;
 @Configuration
 @ConfigurationProperties(prefix = "connection")
 public class ConnectionFactoryConfig {
+    private static final Logger log = LoggerFactory.getLogger(ConnectionFactoryConfig.class);
 
     private String type;
     private String remoteUrl;
@@ -54,21 +57,43 @@ public class ConnectionFactoryConfig {
         return factory;
     }
 
-    //Non-pooled ConnectionFactory - used by SJMS
+    //Openwire ConnectionFactory
+    public ConnectionFactory openwireConnectionFactory(){
+
+        org.apache.activemq.ActiveMQConnectionFactory factory = new org.apache.activemq.ActiveMQConnectionFactory(remoteUrl);
+
+        if (StringUtils.hasLength(this.getUsername())) {
+            factory.setUserName(this.getUsername());
+        }
+        if (StringUtils.hasLength(this.getPassword())) {
+            factory.setPassword(this.getPassword());
+        }
+
+        return factory;
+    }
+
+
+    //Non-pooled ConnectionFactory - used below
     public ConnectionFactory singleConnectionFactory() {
         ConnectionFactory cf = null;
         switch (this.getType()) {
             case "AMQP":
                 cf = amqpConnectionFactory();
+                log.info("AMQP ConnectionFactory");
                 break;
             case "CORE":
                 cf = coreConnectionFactory();
+                log.info("CORE ConnectionFactory");
+                break;
+            case "OPENWIRE":
+                cf = openwireConnectionFactory();
+                log.info("OPENWIRE ConnectionFactory");
                 break;
         }
         return cf;
     }
 
-    //Pooled ConnectionFactory - autowired by AMQP
+    //Pooled ConnectionFactory
     @Bean
     @Primary
     public ConnectionFactory pooledConnectionFactory() {
