@@ -18,6 +18,8 @@ import org.springframework.jms.connection.JmsTransactionManager;
 
 @SpringBootApplication
 public class Application {
+	
+
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
@@ -46,5 +48,13 @@ public class Application {
 		SpringTransactionPolicy transactionPolicy = new SpringTransactionPolicy(jmsTransactionManager);
 		transactionPolicy.setPropagationBehaviorName(transactionPropagation);
 		return transactionPolicy;
+	}
+
+	@Bean 
+	public String messageWithSetLenght (@Value("${send.message.length}") Integer sendMessageLength){
+		if (sendMessageLength>0) {
+            return String.format("%1$"+sendMessageLength+ "s", "").replace(" ","M");
+        }
+		return "";
 	}
 }

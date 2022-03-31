@@ -51,7 +51,7 @@ public class Routes extends RouteBuilder {
     @PostConstruct
     private void postConstruct(){
         if (sendMessageLength>0) {
-            sendMessage = String.format("%1$"+sendMessageLength+ "s", "").replace(" ","M");
+            sendMessage = "${ref:messageWithSetLenght}";
         }
 
         if (sendHeadersCount>0){
