@@ -47,16 +47,15 @@ public class Routes extends RouteBuilder {
     @Value("${send.headers.length}")
     Integer sendHeadersLength;
 
-    @Value("${send.header.name}")
-    String sendHeaderName;
+    @Value("#{${send.headers}}")
+    Map<String,String> sendHeaders;
 
-    @Value("${send.header.value}")
-    String sendHeaderValue;
 
     Map<Object,Object> extraHeaders = new HashMap<>();
 
     @PostConstruct
     private void postConstruct(){
+        log.info("send.message: {}",sendMessage);
         if (sendMessageLength>0) {
             sendMessage = "${ref:messageWithSetLenght}";
         }
@@ -71,12 +70,10 @@ public class Routes extends RouteBuilder {
     }
 
     public void addExtraHeaders(@Headers Map<Object,Object> headers){
+        // Add additional headers with given name and value
+        if (sendHeaders!=null) headers.putAll(sendHeaders);
         // Generated headers with given length
         headers.putAll(extraHeaders);
-        // Add one additional header with given name and value
-        if (!StringUtils.isBlank(sendHeaderName)) {
-            headers.put(sendHeaderName,sendHeaderValue);
-        }
     }
 
     @Override
