@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PostConstruct;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import org.apache.camel.Headers;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.ThreadPoolRejectedPolicy;
@@ -46,6 +47,12 @@ public class Routes extends RouteBuilder {
     @Value("${send.headers.length}")
     Integer sendHeadersLength;
 
+    @Value("${send.header.name}")
+    String sendHeaderName;
+
+    @Value("${send.header.value}")
+    String sendHeaderValue;
+
     Map<Object,Object> extraHeaders = new HashMap<>();
 
     @PostConstruct
@@ -64,7 +71,12 @@ public class Routes extends RouteBuilder {
     }
 
     public void addExtraHeaders(@Headers Map<Object,Object> headers){
-       headers.putAll(extraHeaders);
+        // Generated headers with given length
+        headers.putAll(extraHeaders);
+        // Add one additional header with given name and value
+        if (!StringUtils.isBlank(sendHeaderName)) {
+            headers.put(sendHeaderName,sendHeaderValue);
+        }
     }
 
     @Override

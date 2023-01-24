@@ -1,0 +1,79 @@
+server.port=0
+
+# connection.type=AMQP
+# connection.remoteUrl=amqp://localhost:5672?jms.prefetchPolicy.all=10
+# connection.remoteUrl=amqps://amq-broker-my-acceptor-0.apps.mycluster.com:443?transport.verifyHost=false&transport.trustStoreLocation=./certs/client.ts&transport.trustStorePassword=changeit
+
+connection.type=CORE
+connection.remoteUrl=tcp://localhost:61616
+# connection.remoteUrl=tcp://localhost:61616?retryInterval=100;retryIntervalMultiplier=1.0;reconnectAttempts=30;consumerWindowSize=4000
+# connection.remoteUrl=tcp://amq-broker-my-acceptor-0.apps.mycluster.com:443?sslEnabled=true;verifyHost=false;trustAll=true
+# connection.remoteUrl=tcp://amq-broker-my-acceptor-0.apps.mycluster.com:443?sslEnabled=true&trustStorePath=./certs/client.ts&trustStorePassword=secret
+# connection.remoteUrl=tcp://my-broker-ssl-0-svc-rte-amq-sso-oauth.apps.phlwx29v.eastus.aroapp.io:443?sslEnabled=true&verifyHost=false&trustAll=true&httpEnabled=true
+
+#https://activemq.apache.org/connection-configuration-uri
+# connection.type=OPENWIRE
+# connection.remoteUrl=tcp://localhost:61616
+# connection.remoteUrl=ssl://localhost:61617
+# connection.remoteUrl=failover:(tcp://localhost:61616)?maxReconnectDelay=1000
+# connection.remoteUrl=failover:(ssl://amq-broker-my-acceptor-0.apps.mycluster.com:443)?maxReconnectDelay=10000
+# connection.remoteUrl=failover:(ssl://tmsmessaginghub-rosa-dev.bpglobal.com:443)?maxReconnectDelay=10000
+# connection.remoteUrl=ssl://tmsmessaginghub-rosa-dev.bpglobal.com:443
+# Set trustStore on JVM level for OPENWIRE and run the jar:
+# java -jar -Dspring.profiles.active=send -Djavax.net.ssl.trustStore=/Users/bszeti/tmp/ca/ca.jks -Djavax.net.ssl.trustStorePassword=secret target/jmstest-1.0-SNAPSHOT.jar
+# java -jar -Dspring.profiles.active=send -Djavax.net.ssl.trustStore=/Users/bszeti/tmp/ca/ca.jks -Djavax.net.ssl.trustStorePassword=secret -Djavax.net.ssl.keyStore=/Users/bszeti/tmp/ca/myclient.jks -Djavax.net.ssl.keyStorePassword=secret target/jmstest-1.0-SNAPSHOT.jar
+# java -jar -Dspring.profiles.active=send target/jmstest-1.0-SNAPSHOT.jar
+# TMS
+# java -jar -Dspring.profiles.active=send -Djavax.net.ssl.keyStore=./certs/mbserver.jks -Djavax.net.ssl.keyStorePassword=Changeit_2020 target/jmstest-1.0-SNAPSHOT.jar
+
+connection.username=apps
+connection.password=secret
+# connection.username=admin
+# connection.password=admin
+# connection.username=myadmin
+# connection.password=secret
+
+send.count=1
+send.enabled=true
+# send.endpoint=queue:activemq.management
+# send.endpoint=queue:q2
+send.endpoint=queue:test
+# multicast, creates only address
+#send.endpoint=topic:topic1
+# anycast creates address+queue
+#send.endpoint=queue:topic1
+# anycast to one specific queue
+#send.endpoint=queue:topic1::topicq1
+# Goes to NOWHERE
+# send.endpoint=queue:C.q4.Q.topic1`
+# Goes to NOWHERE
+# send.endpoint=topic:C.q1.Q.topic1
+# Goes to NOWHERE
+#send.endpoint=queue:topic1::C.q1.Q.topic1
+# Creates address only, messages are lost
+#send.endpoint=topic:newtopic
+# Creates new anycast queue 
+#send.endpoint=queue:topic1::newq
+# Goes to NOWHERE
+#send.endpoint=topic:topic1::newq2
+# Goes to NOWHERE if "m1" already exists as multicast, otherwise m1 anycast is created
+#send.endpoint=queue:topic1::m1
+# Goes to multicast m1
+#send.endpoint=topic:topic1::m1
+# This works, goes to mulitcast
+# send.endpoint=topic:topic1::C.q3.Q.topic1
+# send.endpoint=queue:C.q1.Q.topic1
+# send.endpoint=topic:topic1
+# send.message.length=15024000
+# send.message.length=100
+send.message=
+send.headers.count=1
+send.headers.length=100
+send.threads=1
+send.delay=100
+
+receive.enabled=false
+
+
+send.headeruuid=_AMQ_DUPL_ID
+
