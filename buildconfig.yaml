@@ -1,0 +1,30 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: fuse-artemis-test
+spec:
+  source:
+    git:
+      ref: master
+      uri: 'https://github.com/bszeti/fuse-artemis-test.git'
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: DockerImage
+        name: 'registry.redhat.io/fuse7/fuse-java-openshift-rhel8:1.11'
+      env: []
+  triggers:
+    - type: ConfigChange
+  output:
+    to:
+      kind: ImageStreamTag
+      name: fuse-artemis-test:latest
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: fuse-artemis-test
+
+
