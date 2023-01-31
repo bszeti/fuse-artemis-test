@@ -1,24 +1,33 @@
 package bszeti.camelspringboot.jmstest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.annotation.PostConstruct;
-
-import io.micrometer.core.instrument.util.StringUtils;
 import org.apache.camel.Headers;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.ThreadPoolRejectedPolicy;
 import org.apache.camel.builder.RouteBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class Routes extends RouteBuilder {
     private static final Logger log = LoggerFactory.getLogger(Routes.class);
+
+    @Autowired
+    ApplicationContext applicationContext;
 
     private AtomicInteger receiveCounter = new AtomicInteger();
     private int receiveCounterLast = 0;
@@ -28,6 +37,12 @@ public class Routes extends RouteBuilder {
 
     @Value("${receive.enabled}")
     Boolean receiveEnabled;
+
+    @Value("${receive.shutdownMessageCount}")
+    Integer receiveShutdownMessageCount;
+
+    @Value("${receive.shutdownIdleSec}")
+    Integer receiveShutdownIdleSec;
 
     @Value("${send.enabled}")
     Boolean sendEnabled;
@@ -50,16 +65,30 @@ public class Routes extends RouteBuilder {
     @Value("#{${send.headers}}")
     Map<String,String> sendHeaders;
 
+    @Value("${send.shutdownEnabled}")
+    Boolean sendShutdownEnabled;
+
+    @Value("${shutdownSec}")
+    Integer shutdownSec;
+
+
+    // Incomplete send thread counter
+    CountDownLatch sendActive;
+
+    // Messages received in last few seconds
+    List<Integer> receiveCounterHistory;
 
     Map<Object,Object> extraHeaders = new HashMap<>();
 
     @PostConstruct
     private void postConstruct(){
         log.info("send.message: {}",sendMessage);
+        // Overwrite send message body with a given length string
         if (sendMessageLength>0) {
             sendMessage = "${ref:messageWithSetLenght}";
         }
 
+        // Create Map with extra headers
         if (sendHeadersCount>0){
             for(int i=0; i<sendHeadersCount; i++) {
                 String key="extra"+i;
@@ -67,6 +96,12 @@ public class Routes extends RouteBuilder {
                 extraHeaders.put(key,value);
             }
         }
+
+        // Prepare send countdown latch, so we can stop once threads are done
+        sendActive = new CountDownLatch(sendThreads);
+
+        //Prepare receiveCounterHistory
+        receiveCounterHistory = new ArrayList<>(receiveShutdownIdleSec);
     }
 
     public void addExtraHeaders(@Headers Map<Object,Object> headers){
@@ -118,6 +153,10 @@ public class Routes extends RouteBuilder {
         // Add a UUID header. Use send.headeruuid=_AMQ_DUPL_ID for Artemis duplicate detection.
         from("timer:sender?period=1&repeatCount={{send.threads}}")
             .routeId("amqp.send").autoStartup("{{send.enabled}}")
+                .onCompletion()
+                    .log(LoggingLevel.INFO, log, "Done - {{send.count}}")
+                    .process(e -> sendActive.countDown())
+                .end()
 
                 .threads().poolSize(sendThreads).maxPoolSize(sendThreads).maxQueueSize(sendThreads).rejectedPolicy(ThreadPoolRejectedPolicy.CallerRuns)
 
@@ -135,11 +174,10 @@ public class Routes extends RouteBuilder {
                         .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId}-${header.CamelLoopIndex} - ${body}")
                     .end()
                 .end()
-            .log(LoggingLevel.INFO, log, "Done - {{send.count}}")
         ;
 
         // Print counters in log
-        from("timer:printCounter?period=1000")
+        from("timer:printCounter?period=1000").routeId("status")
             .setBody(b->{
                 if (receiveEnabled) {
                     int forwarder = receiveForwardedCounter.get();
@@ -157,8 +195,38 @@ public class Routes extends RouteBuilder {
                 return null;
             })
             .log(LoggingLevel.INFO, log, "${body}")
+            // Check shutdown conditions
+            .process(e->{
+                // Shutdown after given time
+                if (shutdownSec>0 && (Instant.now().isAfter(
+                        Instant.ofEpochMilli(applicationContext.getStartupDate()).plus(shutdownSec, ChronoUnit.SECONDS))))
+                    shutdownApp();
+
+                // Send shutdown check
+                if (sendShutdownEnabled && sendActive.getCount()==0)
+                    shutdownApp();
+
+                // Receive shutdown check
+                if (receiveEnabled) {
+                    // Did we reach min expected message count
+                    if (receiveShutdownMessageCount>0 && receiveCounter.get()>=receiveShutdownMessageCount)
+                        shutdownApp();
+                    // Did we receive no message lately
+                    if (receiveShutdownIdleSec>0) {
+                        int current = receiveCounter.get();
+                        if (receiveCounterHistory.size()>=receiveShutdownIdleSec && receiveCounterHistory.remove(0) == current)
+                            shutdownApp();
+                        receiveCounterHistory.add(current);
+                    }
+                }
+            })
         ;
 
+    }
+
+    public void shutdownApp(){
+        log.info("Shutting down...");
+        new Thread(()->SpringApplication.exit(applicationContext)).start();
     }
 
 }
