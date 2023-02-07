@@ -226,7 +226,8 @@ public class Routes extends RouteBuilder {
 
     public void shutdownApp(){
         log.info("Shutting down...");
-        new Thread(()->SpringApplication.exit(applicationContext)).start();
+//        new Thread(()->SpringApplication.exit(applicationContext)).start();
+        new Thread(()->System.exit(0)).start();
     }
 
 }
