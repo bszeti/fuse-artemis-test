@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fuse-artemis-test
+data:
+  application-send.properties: |-
+    connection.type=CORE
+    connection.remoteUrl=tcp://broker-port-0-svc:61617
+    connection.username=admin
+    connection.password=admin
+    send.enabled=true
+    send.threads=2
+    send.count=5
+    send.endpoint=queue:q1
+    send.delay=0
+    send.shutdownEnabled=true
+    send.message=Hello World!
+    send.headers={myproperty: "myvalue", foo: "bar"}
+  application-receive.properties: |-
+    connection.type=CORE
+    connection.remoteUrl=tcp://broker-port-0-svc:61617
+    connection.username=admin
+    connection.password=admin
+    receive.enabled=true
+    receive.concurrentConsumers=2
+    receive.shutdownIdleSec=15

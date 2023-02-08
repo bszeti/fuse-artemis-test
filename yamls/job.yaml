@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fuse-artemis-test
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: main
+          resources:
+            limits:
+              cpu: '2'
+              memory: 2Gi
+            requests:
+              cpu: 50m
+              memory: 500Mi
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              export JAVA_OPTIONS="-Dspring.profiles.active=send"; /usr/local/s2i/run; 
+              export JAVA_OPTIONS="-Dspring.profiles.active=receive"; /usr/local/s2i/run;
+          volumeMounts:
+            - name: configmap-fuse-artemis-test
+              readOnly: true
+              mountPath: /deployments/application-send.properties
+              subPath: application-send.properties
+            - name: configmap-fuse-artemis-test
+              readOnly: true
+              mountPath: /deployments/application-receive.properties
+              subPath: application-receive.properties
+#          image: quay.io/bszeti/fuse-artemis-test:latest
+#          image: image-registry.openshift-image-registry.svc:5000/myproject/fuse-artemis-test:latest
+          image: fuse-artemis-test:latest
+      volumes:
+        - name: configmap-fuse-artemis-test
+          configMap:
+            name: fuse-artemis-test
+            defaultMode: 420

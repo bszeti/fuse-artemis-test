@@ -26,5 +26,9 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: fuse-artemis-test
+spec:
+  # Makes it possible to use image: "fuse-artemis-test:latest" in Pod spec within the build namespace
+  lookupPolicy:
+    local: true
 
 
