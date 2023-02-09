@@ -22,5 +22,6 @@ data:
     connection.username=admin
     connection.password=admin
     receive.enabled=true
+    receive.queue=q1
     receive.concurrentConsumers=2
     receive.shutdownIdleSec=15

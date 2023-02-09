@@ -1,0 +1,46 @@
+apiVersion: broker.amq.io/v1beta1
+kind: ActiveMQArtemis
+metadata:
+  name: broker
+spec:
+  acceptors:
+    - port: 61617
+      expose: true
+      supportAdvisory: false
+      name: port
+      sslEnabled: false
+      protocols: 'amqp,core,openwire'
+      suppressInternalManagementObjects: false
+  addressSettings:
+    addressSetting:
+      - match: '#'
+        maxSizeBytes: 100Mb
+  brokerProperties:
+    - criticalAnalyzer=false
+  console:
+    expose: true
+    sslEnabled: false
+  adminUser: admin
+  adminPassword: admin
+  deploymentPlan:
+    size: 1
+    persistenceEnabled: true
+    requireLogin: true
+    enableMetricsPlugin: true
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 250m
+        memory: 1Gi
+    livenessProbe:
+      initialDelaySeconds: 300
+    enableMetricsPlugin: true
+    image: placeholder
+    storage:
+      size: 5Gi
+  upgrades:
+    enabled: true
+    minor: true
+  version: 7.10.2
