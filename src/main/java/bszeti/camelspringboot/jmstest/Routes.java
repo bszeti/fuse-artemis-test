@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -122,9 +121,9 @@ public class Routes extends RouteBuilder {
         // Receive messages and optionally forward them to another queue
         // If message body contains "error" an exception is thrown (before forwarding)
         // The consumer can have transacted=true, then the rest of the route uses transaction policy receive.forward.propagation. This is to test different scenarios for the forwarding. Default is PROPAGATION_REQUIRED
-        from("amqp:{{receive.endpoint}}")
-            .routeId("amqp.receive").autoStartup("{{receive.enabled}}")
-//            .transacted("jmsSendTransaction")
+        from("amq:{{receive.endpoint}}")
+            .routeId("amq.receive").autoStartup("{{receive.enabled}}")
+            .transacted("jmsSendTransaction")
             .log(LoggingLevel.DEBUG, log, "Received:  ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER}")
 
             .choice()
@@ -137,8 +136,7 @@ public class Routes extends RouteBuilder {
             .choice()
                 .when(constant("{{receive.forward.enabled}}"))
                 .delay(constant("{{receive.forward.delay}}"))
-//                .setHeader("_AMQ_DUPL_ID",constant("0000000000000000"))
-                .to("amqp:{{receive.forward.endpoint}}")
+                .to("amq:{{receive.forward.endpoint}}")
                 .log(LoggingLevel.DEBUG, log, "Forwarded: ${exchangeId} - ${header._AMQ_DUPL_ID} - ${header.JMETER_COUNTER} - ${header.counter}")
                 .process(e-> receiveForwardedCounter.incrementAndGet())
                 .end()
@@ -152,7 +150,7 @@ public class Routes extends RouteBuilder {
         // Message body is from property send.message. For examepl a simple experessions: #{'$'}{exchangeId}/#{'$'}{header.CamelLoopIndex}
         // Add a UUID header. Use send.headeruuid=_AMQ_DUPL_ID for Artemis duplicate detection.
         from("timer:sender?period=1&repeatCount={{send.threads}}")
-            .routeId("amqp.send").autoStartup("{{send.enabled}}")
+            .routeId("amq.send").autoStartup("{{send.enabled}}")
                 .onCompletion()
                     .log(LoggingLevel.INFO, log, "Done - {{send.count}}")
                     .process(e -> sendActive.countDown())
@@ -168,7 +166,7 @@ public class Routes extends RouteBuilder {
                         .setHeader("{{send.headeruuid}}").exchange(e->java.util.UUID.randomUUID().toString())
                         .bean(this,"addExtraHeaders")
 
-                        .to("amqp:{{send.endpoint}}")
+                        .to("amq:{{send.endpoint}}")
                         .process(e-> sendCounter.incrementAndGet())
                         .delay(constant("{{send.delay}}"))
                         .log(LoggingLevel.DEBUG, log, "Sent msg: ${exchangeId}-${header.CamelLoopIndex} - ${body}")
@@ -226,7 +224,6 @@ public class Routes extends RouteBuilder {
 
     public void shutdownApp(){
         log.info("Shutting down...");
-//        new Thread(()->SpringApplication.exit(applicationContext)).start();
         new Thread(()->System.exit(0)).start();
     }
 
