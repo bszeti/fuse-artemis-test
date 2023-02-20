@@ -1,23 +1,101 @@
 = Fuse with Artemis broker test app
 
-This application can send, receive and forward messages to an Artemis message broker.
+This application can send, receive and optionally forward messages to an Artemis (Red Hat AMQ 7) message broker.
+
+== Build & run
+
+The app is based on Apache Camel v2 (Red Hat Fuse v7) running on Spring Boot v2. Build should be simple with Maven v3.8 using Java 1.8 or Java 11:
+
+`mvn clean install`
+
+Run as:
+
+`java -jar target/*.jar`
+
+Alternatively we can build/run the application in one command using `spring-boot:run`. For example:
+
+`mvn clean spring-boot:run`
+
+By default parameters are taken from link:src/main/resources/application.properties[`application.properties`], but usually we have different `application-myprofile.properties` files and pick one like:
+
+* `java -Dspring.profiles.active=myprofile -jar target/*.jar`
+* `mvn clean spring-boot:run -Dspring-boot.run.profiles=myprofile`
+
+== Broker connection
+
+The app supports CORE, AMQP or OPENWIRE protocols to connect to the broker. The connection string must set to match the selected protocol.
+
+CORE example:
+
+```
+# https://access.redhat.com/documentation/en-us/red_hat_amq_clients/2.11/html-single/using_the_amq_core_protocol_jms_client/index#configuration_options
+connection.type=CORE
+connection.remoteUrl=tcp://localhost:61616?retryInterval=100;retryIntervalMultiplier=1.0;reconnectAttempts=30;consumerWindowSize=4000
+```
+
+AMQP example:
+
+```
+# https://qpid.apache.org/releases/qpid-jms-0.61.0/docs/index.html#connection-uri
+connection.type=AMQP
+connection.remoteUrl=amqp://localhost:5672?jms.prefetchPolicy.all=10
+```
+
+OPENWIRE example:
+
+```
+# https://activemq.apache.org/connection-configuration-uri
+connection.type=OPENWIRE
+connection.remoteUrl=failover:(tcp://localhost:61616)?maxReconnectDelay=10000
+```
+
+Connection pooling is enabled using `org.messaginghub.pooled.jms.JmsPoolConnectionFactory` with `connection.maxConnections` size.
+Alternatively can set `connection.useCachingConnectionFactory=true` to use Spring's `CachingConnectionFactory` instead.
 
 == Send messages
 
-We can send messages to a queue by creating this properties file:
+We can send messages to queue "myqueue" by creating `application-send.properties` properties file:
 ```
-#application-send.properties
 send.enabled=true
-send.endpoint=queue:sendtest
-send.message.length=1
-send.headers.count=1
-send.headers.length=10000
-send.delay=0
-send.count=100000
+send.endpoint=queue:myqueue
+send.message.length=1000
+send.headers.count=2
+send.headers.length=40
+send.count=10
+send.shutdownEnabled=true
+
+connection.type=CORE
+connection.remoteUrl=tcp://localhost:61616
+connection.username=admin
+connection.password=admin
 ```
 
-This will send 100000 messages with only 1 char message body and one 10000 char long JMS property.
+This will send 10 messages with 1000 char message body and two 40 char long JMS property, then it will shut down.
 
 Run application using the _send_ Spring profile. For example with Maven:
 
 `mvn clean spring-boot:run -Dspring-boot.run.profiles=send`
+
+Message body - text - can be set, or it can be generated with given length:
+
+```
+# Message body to use
+send.message=Hello World!
+
+# Alternatively generate message body with given length (chars) greater than 0.
+send.message.length=1000
+```
+
+Messages headers (JMS properties) can also be set directly or generated with given length (name "extra0", "extra1"..):
+
+```
+# Headers to add
+send.headers={header1: "value1", header2: "value2"}
+# Alternatively add geneated headers with given length (chars)
+send.headers.count=2
+send.headers.length=40
+```
+
+The generated messages are useful for large message testing or during performance tests, when the message content is not important.
+With `send.threads` parameter we can also have multiple threads sending messages (`send.count` per each), to increase load on the broker.
+
