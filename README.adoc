@@ -72,9 +72,9 @@ connection.password=admin
 
 This will send 10 messages with 1000 char message body and two 40 char long JMS property, then it will shut down.
 
-Run application using the _send_ Spring profile. For example with Maven:
+Run application using the _send_ Spring profile:
 
-`mvn clean spring-boot:run -Dspring-boot.run.profiles=send`
+`java -Dspring.profiles.active=send -jar target/*.jar`
 
 Message body - text - can be set, or it can be generated with given length:
 
@@ -99,3 +99,69 @@ send.headers.length=40
 The generated messages are useful for large message testing or during performance tests, when the message content is not important.
 With `send.threads` parameter we can also have multiple threads sending messages (`send.count` per each), to increase load on the broker.
 
+The total number of sent messages and rate is logged every second.
+
+== Receive messages
+
+We can receive messages from a queue or topic. These messages are not saved or printed anywhere, the goal is to test message flow and rate of message consumption.
+
+For example create `application-receive.properties` properties file:
+```
+receive.enabled=true
+receive.concurrentConsumers=2
+receive.transacted=false
+receive.cacheLevelName=CACHE_CONSUMER
+receive.queue=q1
+# Instead of "receive.queue" and parameters above we could set the whole JMS component endpoint "receive.endpoint" directly
+#receive.endpoint=queue:q1?concurrentConsumers=2&transacted=false&cacheLevelName=CACHE_CONSUMER
+
+connection.type=CORE
+connection.remoteUrl=tcp://localhost:61616
+connection.username=admin
+connection.password=admin
+```
+
+Run `java -Dspring.profiles.active=receive -jar target/*.jar` to receive messages from queue "q1" using two consumer threads.
+
+Add `logging.level.bszeti.camelspringboot.jmstest=TRACE` to log message ID's and when messages are "received" and "processed". We can use parameter `receive.delay=100` to simulate 100ms message processing time.
+
+By default the application doesn't terminate and we have to kill or manually (Ctrl+C) stop the process. To stop app after receiving messages use one of these parameters:
+
+* `receive.shutdownMessageCount`: Stop process after receiving a number of messages.
+* `receive.shutdownIdleSec`: Stop after not receiving any more messages for the given time.
+* `shutdownSec`: Stop app after given time from startup (applies to send and receive too)
+
+The total number of received messages and rate is logged every second.
+
+== Receive & forward
+
+Optionally the received messages can be forwarded to another queue. This advanced feature was built to test message receive and send within the same transaction. Look at the details in the code.
+
+A complete scenario with sending, receiving and forwarding 10k messages would look like this:
+
+```
+send.enabled=true
+send.endpoint=queue:q1
+send.message.length=1000
+send.count=10000
+
+receive.enabled=true
+receive.endpoint=queue:q1?concurrentConsumers=1&transacted=true&cacheLevelName=CACHE_CONSUMER
+
+receive.forward.enabled=true
+receive.forward.endpoint=queue:q1.forward
+receive.forward.propagation=PROPAGATION_REQUIRED
+
+connection.type=OPENWIRE
+connection.remoteUrl=failover(tcp://localhost:61616)?maxReconnectDelay=1000
+```
+
+Ideally this would end up with 10k messages on "q1.forward" queue.
+
+== Container
+
+The app can be packaged in a container using link:Dockerfile[`Dockerfile`] or with OpenShift S2I _BuildConfig_ link:yamls/buildconfig.yaml[`yamls/buildconfig.yaml`].
+A built image is available as `quay.io/bszeti/fuse-artemis-test:latest`.
+
+We can put "application.properties" in a ConfigMap like link:yamls/configmap.yaml[`yamls/configmap.yaml`] and then create a Kubernetes _Job_ to run the container image as link:yamls/job.yaml[`yamls/job.yaml`].
+An example _ActiveMQArtemis_ CR for the _AMQ Broker Operator_ can be found in link:yamls/activemqartemis.yaml[`yamls/activemqartemis.yaml`]
